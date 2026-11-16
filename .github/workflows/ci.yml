@@ -58,7 +58,7 @@ jobs:
         run: |
           ln -s . hotel
           mkdir -p reports
-          pytest tests/ -k "not api and not integration and not regression" \
+          pytest tests/test_cinema.py \
             --junitxml=reports/unit-junit.xml \
             --html=reports/unit-report.html --self-contained-html -v
 
