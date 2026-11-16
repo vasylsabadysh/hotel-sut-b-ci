@@ -84,7 +84,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -e ".[regression]" pytest-html
+          pip install -e ".[regression]" pytest-html httpx httpx2
 
       - name: Run Integration, API & Regression Tests (with Testcontainers)
         env:
