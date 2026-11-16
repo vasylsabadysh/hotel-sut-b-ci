@@ -1,0 +1,7 @@
+pyproject.toml
+hotel317_variant03.egg-info/PKG-INFO
+hotel317_variant03.egg-info/SOURCES.txt
+hotel317_variant03.egg-info/dependency_links.txt
+hotel317_variant03.egg-info/requires.txt
+hotel317_variant03.egg-info/top_level.txt
+tests/test_integration.py

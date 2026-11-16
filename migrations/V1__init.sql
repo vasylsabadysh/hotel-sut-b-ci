@@ -1,0 +1,38 @@
+BEGIN;
+
+CREATE TABLE IF NOT EXISTS rooms (
+ id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ code VARCHAR(40) NOT NULL UNIQUE CHECK(length(trim(code)) > 0),
+ nightly_rate BIGINT NOT NULL CHECK(nightly_rate BETWEEN 100 AND 1000000),
+ capacity INTEGER NOT NULL CHECK(capacity BETWEEN 1 AND 6)
+);
+
+CREATE TABLE IF NOT EXISTS bookings (
+ id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ reference VARCHAR(40) NOT NULL UNIQUE CHECK(length(trim(reference)) > 0),
+ check_in DATE NOT NULL,
+ check_out DATE NOT NULL,
+ guests INTEGER NOT NULL CHECK(guests BETWEEN 1 AND 6),
+ regular BOOLEAN NOT NULL,
+ total BIGINT NOT NULL CHECK(total BETWEEN 0 AND 30000000),
+ prepaid BIGINT NOT NULL CHECK(prepaid BETWEEN 0 AND total),
+ refund BIGINT NOT NULL CHECK(refund BETWEEN 0 AND prepaid),
+ status VARCHAR(16) NOT NULL CHECK(status IN ('CONFIRMED','CANCELLED')),
+ CHECK(check_out - check_in BETWEEN 1 AND 30)
+);
+
+CREATE TABLE IF NOT EXISTS booking_items (
+ id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ booking_id BIGINT NOT NULL UNIQUE REFERENCES bookings(id) ON DELETE CASCADE,
+ room_id BIGINT NOT NULL REFERENCES rooms(id) ON DELETE RESTRICT,
+ nightly_rate BIGINT NOT NULL CHECK(nightly_rate BETWEEN 100 AND 1000000)
+);
+
+CREATE INDEX IF NOT EXISTS booking_items_room ON booking_items(room_id);
+CREATE INDEX IF NOT EXISTS bookings_period ON bookings(status,check_in,check_out);
+
+INSERT INTO rooms (code, nightly_rate, capacity) 
+VALUES ('ROOM-101', 10000, 4)
+ON CONFLICT (code) DO NOTHING;
+
+COMMIT;

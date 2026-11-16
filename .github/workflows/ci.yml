@@ -1,0 +1,104 @@
+name: SUT B CI Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    name: 1. Build & Syntax Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install package & dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[regression]" pytest-html build
+
+      - name: Build distribution package & check syntax
+        run: |
+          python -m build
+          python -m compileall .
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-dist
+          path: dist/
+
+  unit-tests:
+    name: 2. Unit Tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[regression]" pytest-html
+
+      - name: Run Unit Tests
+        env:
+          PYTHONPATH: "."
+        run: |
+          ln -s . hotel
+          mkdir -p reports
+          pytest tests/ -k "not api and not integration and not regression" \
+            --junitxml=reports/unit-junit.xml \
+            --html=reports/unit-report.html --self-contained-html -v
+
+      - name: Upload Unit Test Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-report
+          path: reports/
+
+  integration-api-tests:
+    name: 3. Integration, API & Regression Tests
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[regression]" pytest-html
+
+      - name: Run Integration, API & Regression Tests (with Testcontainers)
+        env:
+          PYTHONPATH: "."
+        run: |
+          ln -s . hotel
+          mkdir -p reports
+          pytest tests/test_api.py tests/test_integration.py tests/booking_regression.py \
+            --junitxml=reports/integration-junit.xml \
+            --html=reports/integration-report.html --self-contained-html -v
+
+      - name: Upload Integration & API Test Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-api-test-report
+          path: reports/

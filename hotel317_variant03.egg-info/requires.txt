@@ -1,0 +1,10 @@
+psycopg[binary]<4,>=3.2
+fastapi<1,>=0.118
+uvicorn<1,>=0.34
+
+[regression]
+pytest<9,>=8
+testcontainers[postgres]<5,>=4.8
+
+[test]
+pytest<9,>=8
